@@ -15,7 +15,6 @@
 - GitLab Username: ZebaSamiya
 
 
-
 A new Flutter project.
 
 ## Getting Started
