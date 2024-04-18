@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:mentor_match/firebase_options.dart';
 import './pages/home_screen.dart'; // Import your home screen widget
-// import './pages/login.dart'; // Import your login page widget
+import './pages/login.dart'; // Import your login page widget
 import './pages/signup.dart'; // Import your sign-up page widget
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(MyApp());
 }
 
