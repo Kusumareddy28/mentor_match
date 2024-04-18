@@ -1,8 +1,5 @@
 import 'package:flutter/material.dart';
 import './profile_page.dart'; // Import the profile screen Dart file
-import './network_screen.dart';
-import './jobs_screen.dart';
-import './message_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -45,46 +42,29 @@ class HomeScreen extends StatelessWidget {
             selectedItemColor: Colors.black, // Change the color of the selected item
             unselectedItemColor: Colors.black.withOpacity(0.5),
             onTap: (index) {
-  // Handle navigation based on the tapped index
-  switch (index) {
-    case 0:
-      // Navigate to home screen
-      break;
-    case 1:
-      // Navigate to network screen
-      // Replace 'NetworkScreen()' with the actual screen you want to navigate to
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => NetworkScreen()),
-      );
-      break;
-    case 2:
-      // Navigate to jobs screen
-      // Replace 'JobsScreen()' with the actual screen you want to navigate to
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => JobsScreen()),
-      );
-      break;
-    case 3:
-      // Navigate to messaging screen
-      // Replace 'MessagingScreen()' with the actual screen you want to navigate to
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => MessagesScreen()),
-      );
-      break;
-    case 4:
-      // Navigate to profile screen
-      // Replace 'ProfileScreen()' with the actual screen you want to navigate to
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => ProfileScreen()),
-      );
-      break;
-  }
-},
-
+              // Handle navigation based on the tapped index
+              switch (index) {
+                case 0:
+                  // Navigate to home screen
+                  break;
+                case 1:
+                  // Navigate to network screen
+                  break;
+                case 2:
+                  // Navigate to jobs screen
+                  break;
+                case 3:
+                  // Navigate to messaging screen
+                  break;
+                case 4:
+                  // Navigate to profile screen
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()),
+                  );
+                  break;
+              }
+            },
           ),
         ),
       ),
