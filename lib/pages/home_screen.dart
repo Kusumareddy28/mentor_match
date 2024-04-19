@@ -1,7 +1,24 @@
 import 'package:flutter/material.dart';
 import './profile_page.dart'; // Import the profile screen Dart file
+import './network_screen.dart';
+import './jobs_screen.dart';
+import './message_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0;
+  late PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: _selectedIndex);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -14,9 +31,10 @@ class HomeScreen extends StatelessWidget {
             showSearch(context: context, delegate: DataSearch());
           },
         ),
-        bottom: PreferredSize(
-          preferredSize: Size.fromHeight(kBottomNavigationBarHeight),
-          child: BottomNavigationBar(
+      ),
+      body: Column(
+        children: [
+                    BottomNavigationBar(
             items: [
               BottomNavigationBarItem(
                 icon: Icon(Icons.home),
@@ -37,42 +55,79 @@ class HomeScreen extends StatelessWidget {
               BottomNavigationBarItem(
                 icon: Icon(Icons.person),
                 label: 'Profile',
-              ), // Add a bottom navigation bar item for the profile screen
+              ),
             ],
-            selectedItemColor: Colors.black, // Change the color of the selected item
+            currentIndex: _selectedIndex,
+            selectedItemColor: Colors.black,
             unselectedItemColor: Colors.black.withOpacity(0.5),
             onTap: (index) {
-              // Handle navigation based on the tapped index
-              switch (index) {
-                case 0:
-                  // Navigate to home screen
-                  break;
-                case 1:
-                  // Navigate to network screen
-                  break;
-                case 2:
-                  // Navigate to jobs screen
-                  break;
-                case 3:
-                  // Navigate to messaging screen
-                  break;
-                case 4:
-                  // Navigate to profile screen
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()),
-                  );
-                  break;
-              }
+              setState(() {
+                _selectedIndex = index;
+                _pageController.animateToPage(
+                  index,
+                  duration: Duration(milliseconds: 300),
+                  curve: Curves.easeInOut,
+                );
+              });
             },
           ),
-        ),
-      ),
-      body: Center(
-        child: Text(
-          'Home Screen',
-          style: TextStyle(fontSize: 24.0),
-        ),
+          Expanded(
+            child: PageView(
+              children: [
+                Center(
+                  child: Text('Home Screen', style: TextStyle(fontSize: 24.0)),
+                ),
+                NetworkScreen(),
+                JobsScreen(),
+                MessagesScreen(),
+                ProfileScreen(),
+              ],
+              onPageChanged: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
+              controller: _pageController,
+            ),
+          ),
+          // BottomNavigationBar(
+          //   items: [
+          //     BottomNavigationBarItem(
+          //       icon: Icon(Icons.home),
+          //       label: 'Home',
+          //     ),
+          //     BottomNavigationBarItem(
+          //       icon: Icon(Icons.people),
+          //       label: 'Network',
+          //     ),
+          //     BottomNavigationBarItem(
+          //       icon: Icon(Icons.work),
+          //       label: 'Jobs',
+          //     ),
+          //     BottomNavigationBarItem(
+          //       icon: Icon(Icons.message),
+          //       label: 'Messaging',
+          //     ),
+          //     BottomNavigationBarItem(
+          //       icon: Icon(Icons.person),
+          //       label: 'Profile',
+          //     ),
+          //   ],
+          //   currentIndex: _selectedIndex,
+          //   selectedItemColor: Colors.black,
+          //   unselectedItemColor: Colors.black.withOpacity(0.5),
+          //   onTap: (index) {
+          //     setState(() {
+          //       _selectedIndex = index;
+          //       _pageController.animateToPage(
+          //         index,
+          //         duration: Duration(milliseconds: 300),
+          //         curve: Curves.easeInOut,
+          //       );
+          //     });
+          //   },
+          // ),
+        ],
       ),
     );
   }
