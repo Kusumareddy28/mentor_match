@@ -1,4 +1,5 @@
 
+
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -59,6 +60,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  // Method to handle the "Update Location" button tap
+  void _updateLocation() {
+    // Implement the desired action here
+    print('Updating location...');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,35 +82,40 @@ class _ProfileScreenState extends State<ProfileScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            SizedBox(height: 20),
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: _takeBackgroundPicture,
-                  child: CircleAvatar(
-                    radius: 100,
-                    backgroundImage: FileImage(_backgroundPicture),
-                  ),
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  image: FileImage(_backgroundPicture),
+                  fit: BoxFit.cover,
                 ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: GestureDetector(
-                    onTap: _takeProfilePicture,
-                    child: CircleAvatar(
-                      radius: 30,
-                      backgroundColor: Colors.blue,
-                      child: Icon(
-                        Icons.camera_alt,
-                        color: Colors.white,
-                        size: 24,
+              ),
+              child: Stack(
+                children: [
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: GestureDetector(
+                      onTap: _takeProfilePicture,
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: Colors.white,
+                        child: Icon(
+                          Icons.camera_alt,
+                          color: Colors.blue,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
             SizedBox(height: 10),
+            CircleAvatar(
+              radius: 60,
+              backgroundImage: FileImage(_profilePicture),
+            ),
+            SizedBox(height: 20),
             Text(
               'John Doe',
               style: TextStyle(
@@ -136,6 +148,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             SizedBox(height: 20),
+            // Button to update location
+
+           TextButton(
+                  onPressed: _updateLocation,
+                  style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 4, 198, 211)), // Background color
+                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white), // Text color
+                    // You can also customize other properties such as padding, shape, etc.
+                    // For example:
+                    // padding: MaterialStateProperty.all<EdgeInsets>(EdgeInsets.all(16)),
+                    // shape: MaterialStateProperty.all<OutlinedBorder>(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                  ),
+                  child: Text(
+                    'Update Location',
+                    style: TextStyle(
+                      fontSize: 16,
+                    ),
+                  ),
+                ),
+            SizedBox(height: 20),
             Text(
               'Connections:',
               style: TextStyle(
@@ -150,7 +182,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemBuilder: (context, index) {
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundImage: AssetImage('assets/connection_picture.jpg'),
+                      backgroundColor: Color.fromARGB(255, 4, 198, 211),
+                      child: Icon(
+                        Icons.person,
+                        color: Colors.white,
+                      ),
                     ),
                     title: Text('Connection $index'),
                     subtitle: Text('Software Engineer'),
