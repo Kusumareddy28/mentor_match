@@ -1,10 +1,10 @@
-
-
 import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 import './login.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -15,6 +15,7 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   late File _profilePicture;
   late File _backgroundPicture;
+  String _location = 'Unknown';
 
   @override
   void initState() {
@@ -60,10 +61,86 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
-  // Method to handle the "Update Location" button tap
-  void _updateLocation() {
-    // Implement the desired action here
-    print('Updating location...');
+  Future<void> _updateLocation() async {
+    try {
+      // Request location permissions
+      bool serviceEnabled;
+      LocationPermission permission;
+
+      // Check if location services are enabled
+      serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        // Location services are not enabled, request the user to enable them
+        return Future.error('Location services are disabled.');
+      }
+
+      permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          // Permissions are denied, show an error message
+          return Future.error('Location permissions are denied.');
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        // Permissions are denied forever, show an error message
+        return Future.error('Location permissions are denied forever.');
+      }
+
+      // Get the user's current location
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      // Reverse geocode the position to get the location name
+      List<Placemark> placemarks = await placemarkFromCoordinates(
+        position.latitude,
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        Placemark placemark = placemarks.first;
+        String location = '${placemark.locality}, ${placemark.administrativeArea}';
+
+        // Update the location in the state
+        setState(() {
+          _location = location;
+        });
+
+        // Display a dialog to confirm the location update
+        showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text('Update Location'),
+            content: Text('Your location will be updated to: $location'),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  // Update the user's location in your app's data
+                  // You can save the location to a database, user profile, or any other storage
+                  print('Location updated to: $location');
+                  Navigator.of(context).pop();
+                },
+                child: Text('Update'),
+              ),
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: Text('Cancel'),
+              ),
+            ],
+          ),
+        );
+      } else {
+        // Handle the case where no placemarks are found
+        print('Unable to determine location name.');
+      }
+    } catch (e) {
+      // Handle any errors that occur during the location update process
+      print('Error updating location: $e');
+    }
   }
 
   @override
@@ -148,25 +225,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
             ),
             SizedBox(height: 20),
-            // Button to update location
-
-           TextButton(
-                  onPressed: _updateLocation,
-                  style: ButtonStyle(
-                    backgroundColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 4, 198, 211)), // Background color
-                    foregroundColor: MaterialStateProperty.all<Color>(Colors.white), // Text color
-                    // You can also customize other properties such as padding, shape, etc.
-                    // For example:
-                    // padding: MaterialStateProperty.all<EdgeInsets>(EdgeInsets.all(16)),
-                    // shape: MaterialStateProperty.all<OutlinedBorder>(RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                  ),
-                  child: Text(
-                    'Update Location',
-                    style: TextStyle(
-                      fontSize: 16,
-                    ),
-                  ),
+            TextButton(
+              onPressed: _updateLocation,
+              style: ButtonStyle(
+                backgroundColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 4, 198, 211)), // Background color
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white), // Text color
+              ),
+              child: Text(
+                'Update Location',
+                style: TextStyle(
+                  fontSize: 16,
                 ),
+              ),
+            ),
+            SizedBox(height: 20),
+            Text(
+              'Current Location: $_location',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
             SizedBox(height: 20),
             Text(
               'Connections:',
