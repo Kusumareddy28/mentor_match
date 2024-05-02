@@ -1,10 +1,10 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import './login.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -16,13 +16,89 @@ class _ProfileScreenState extends State<ProfileScreen> {
   late File _profilePicture;
   late File _backgroundPicture;
   String _location = 'Unknown';
+  DocumentSnapshot? userProfileData;
+  Set<String> connectedUserIds = {};
+
 
   @override
   void initState() {
     super.initState();
     _profilePicture = File('assets/profile_picture.jpg');
     _backgroundPicture = File('assets/background_picture.jpg');
+    _fetchUserProfile();
+    _fetchConnections();
   }
+
+Future<void> _fetchUserProfile() async {
+  User? currentUser = FirebaseAuth.instance.currentUser;
+  if (currentUser != null) {
+    try {
+      var doc = await FirebaseFirestore.instance.collection('users').doc(currentUser.uid).get();
+      if (doc.exists) {
+        userProfileData = doc; // DocumentSnapshot already fetched
+        setState(() {});
+      }
+    } catch (e) {
+      print('Error fetching user profile: $e');
+    }
+  }
+}
+
+Future<void> _fetchConnections() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        var connectionsSnapshot = await FirebaseFirestore.instance
+            .collection('connections')
+            .where('status', whereIn: ['pending', 'accepted'])
+            .where('senderId', isEqualTo: currentUser.uid)
+            .get();
+        var receivedConnectionsSnapshot = await FirebaseFirestore.instance
+            .collection('connections')
+            .where('status', whereIn: ['pending', 'accepted'])
+            .where('receiverId', isEqualTo: currentUser.uid)
+            .get();
+
+        connectedUserIds.addAll(connectionsSnapshot.docs.map((doc) => doc['receiverId'] as String));
+        connectedUserIds.addAll(receivedConnectionsSnapshot.docs.map((doc) => doc['senderId'] as String));
+
+        setState(() {});
+      } catch (e) {
+        print('Error fetching connections: $e');
+      }
+    }
+  }
+
+  Widget _buildAvailableUsersList() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('users')
+          .where(FieldPath.documentId, isNotEqualTo: FirebaseAuth.instance.currentUser?.uid)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return CircularProgressIndicator();
+
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            var userDoc = snapshot.data!.docs[index];
+            var userId = userDoc.id;
+
+            if (connectedUserIds.contains(userId)) {
+              return Container(); // Skip rendering this user
+            }
+
+            return ListTile(
+              leading: CircleAvatar(),
+              title: Text(userDoc['fullName'] ?? 'No Name'),
+              subtitle: Text(userDoc['email'] ?? 'No Email'),
+              onTap: () {}, // Handle tap
+            );
+          },
+        );
+      },
+    );
+  }
+
 
   Future<void> _takeProfilePicture() async {
     final picker = ImagePicker();
@@ -35,28 +111,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
   }
 
-  Future<void> _takeBackgroundPicture() async {
-    final picker = ImagePicker();
-    final pickedFile = await picker.getImage(source: ImageSource.camera);
-
-    setState(() {
-      if (pickedFile != null) {
-        _backgroundPicture = File(pickedFile.path);
-      }
-    });
-  }
-
-  // Function to handle logout
   Future<void> _logout() async {
     try {
       await FirebaseAuth.instance.signOut();
-      // Navigate to login page or any other appropriate page
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => LoginPage()),
       );
     } catch (e) {
-      // Handle logout error
       print('Error logging out: $e');
     }
   }
@@ -143,8 +205,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+
+
   @override
   Widget build(BuildContext context) {
+      Map<String, dynamic>? userData = userProfileData?.data() as Map<String, dynamic>?;  // Cast here
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Profile'),
@@ -167,24 +233,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   fit: BoxFit.cover,
                 ),
               ),
-              child: Stack(
-                children: [
-                  Positioned(
-                    bottom: 20,
-                    right: 20,
-                    child: GestureDetector(
-                      onTap: _takeProfilePicture,
-                      child: CircleAvatar(
-                        radius: 50,
-                        backgroundColor: Colors.white,
-                        child: Icon(
-                          Icons.camera_alt,
-                          color: Colors.blue,
-                        ),
-                      ),
-                    ),
+              child: Positioned(
+                bottom: 20,
+                right: 20,
+                child: GestureDetector(
+                  onTap: _takeProfilePicture,
+                  child: CircleAvatar(
+                    radius: 50,
+                    backgroundColor: Colors.white,
+                    child: Icon(Icons.camera_alt, color: Colors.blue),
                   ),
-                ],
+                ),
               ),
             ),
             SizedBox(height: 10),
@@ -194,32 +253,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             SizedBox(height: 20),
             Text(
-              'John Doe',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+            userData?['fullName'] ?? 'John Doe',
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
             SizedBox(height: 10),
             Text(
-              'Software Engineer | Open to opportunities',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+            userData?['profession'] ?? 'Software Engineer | Open to opportunities',
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 20),
-            Text(
-              'Bio:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            Text('Bio:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Text(
-                'Passionate software engineer with expertise in mobile app development. Currently exploring Flutter for cross-platform app development.',
+              userData?['bio'] ?? 'Passionate software engineer with expertise in mobile app development. Currently exploring Flutter for cross-platform app development.',
                 style: TextStyle(fontSize: 16),
                 textAlign: TextAlign.center,
               ),
@@ -228,31 +275,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
             TextButton(
               onPressed: _updateLocation,
               style: ButtonStyle(
-                backgroundColor: MaterialStateProperty.all<Color>(Color.fromARGB(255, 4, 198, 211)), // Background color
-                foregroundColor: MaterialStateProperty.all<Color>(Colors.white), // Text color
+                backgroundColor: MaterialStateProperty.all<Color>(Colors.blue),
+                foregroundColor: MaterialStateProperty.all<Color>(Colors.white),
               ),
-              child: Text(
-                'Update Location',
-                style: TextStyle(
-                  fontSize: 16,
-                ),
-              ),
+              child: Text('Update Location', style: TextStyle(fontSize: 16)),
             ),
             SizedBox(height: 20),
             Text(
               'Current Location: $_location',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 20),
             Text(
               'Connections:',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Container(
               height: 200,
@@ -261,17 +297,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 itemBuilder: (context, index) {
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Color.fromARGB(255, 4, 198, 211),
-                      child: Icon(
-                        Icons.person,
-                        color: Colors.white,
-                      ),
+                      backgroundColor: Colors.blue,
+                      child: Icon(Icons.person, color: Colors.white),
                     ),
                     title: Text('Connection $index'),
                     subtitle: Text('Software Engineer'),
-                    onTap: () {
-                      // Navigate to connection's profile
-                    },
+                    onTap: () {},
                   );
                 },
               ),
@@ -282,3 +313,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
