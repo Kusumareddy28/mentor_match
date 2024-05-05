@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import './profile_page.dart';
 import './network_screen.dart';
 import './jobs_screen.dart';
-import './message_screen.dart';
+import 'conversation_screen.dart';
 import './picture_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -63,7 +63,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 _buildHomePage(),
                 NetworkScreen(),
                 JobsScreen(),
-                MessagesScreen(),
+                ConversationsScreen(),
                 ProfileScreen(),
               ],
               onPageChanged: (index) {

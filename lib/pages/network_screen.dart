@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'chat_screen.dart';  
 
 class NetworkScreen extends StatefulWidget {
   @override
@@ -85,120 +86,120 @@ class _NetworkScreenState extends State<NetworkScreen> {
     );
   }
 
-
   Widget _buildPendingRequests() {
-  return StreamBuilder<QuerySnapshot>(
-    stream: FirebaseFirestore.instance
-        .collection('connections')
-        .where('receiverId', isEqualTo: userId)
-        .where('status', isEqualTo: 'pending')
-        .snapshots(),
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) return CircularProgressIndicator();
-      return ListView.builder(
-        shrinkWrap: true,
-        itemCount: snapshot.data!.docs.length,
-        itemBuilder: (context, index) {
-          var connectionDoc = snapshot.data!.docs[index];
-          return FutureBuilder<DocumentSnapshot>(
-            future: FirebaseFirestore.instance.collection('users').doc(connectionDoc['senderId']).get(),
-            builder: (context, userSnapshot) {
-              if (!userSnapshot.hasData) return CircularProgressIndicator();
-              if (userSnapshot.error != null) return Text('Failed to load data');
-              if (!userSnapshot.data!.exists) return Text('User data not found');
-
-              Map<String, dynamic> userData = userSnapshot.data!.data() as Map<String, dynamic>;
-              return ListTile(
-                leading: CircleAvatar(
-                  backgroundImage: NetworkImage(userData['profilePicUrl'] ?? 'default_image_url_here'),
-                ),
-                title: Text(userData['fullName'] ?? 'Unknown'),
-                subtitle: Text('Pending Request'),
-                trailing: ElevatedButton(
-                  onPressed: () => _updateConnectionStatus(connectionDoc.id, 'accepted'),
-                  child: Text('Accept'),
-                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
-                ),
-              );
-            },
-          );
-        },
-      );
-    },
-  );
-}
-
-
-
-Widget _buildActiveConnections() {
-  // Stream that merges both conditions where the user is the sender or the receiver
-  return StreamBuilder<QuerySnapshot>(
-    stream: FirebaseFirestore.instance
-      .collection('connections')
-      .where('status', isEqualTo: 'accepted')
-      .where('receiverId', isEqualTo: userId)
-      .snapshots(),
-    builder: (context, snapshot) {
-      if (!snapshot.hasData) {
-        return CircularProgressIndicator();
-      }
-      List<QueryDocumentSnapshot> documents = snapshot.data!.docs;
-
-      // Fetch connections where the current user is the sender
-      return StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
           .collection('connections')
-          .where('status', isEqualTo: 'accepted')
-          .where('senderId', isEqualTo: userId)
+          .where('receiverId', isEqualTo: userId)
+          .where('status', isEqualTo: 'pending')
           .snapshots(),
-        builder: (context, senderSnapshot) {
-          if (senderSnapshot.hasData) {
-            documents.addAll(senderSnapshot.data!.docs);
-          }
-          // Remove duplicates if any and sort or process as needed
-          documents = documents.toSet().toList();
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return CircularProgressIndicator();
+        return ListView.builder(
+          shrinkWrap: true,
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            var connectionDoc = snapshot.data!.docs[index];
+            return FutureBuilder<DocumentSnapshot>(
+              future: FirebaseFirestore.instance.collection('users').doc(connectionDoc['senderId']).get(),
+              builder: (context, userSnapshot) {
+                if (!userSnapshot.hasData) return CircularProgressIndicator();
+                if (userSnapshot.error != null) return Text('Failed to load data');
+                if (!userSnapshot.data!.exists) return Text('User data not found');
 
-          return ListView.builder(
-            shrinkWrap: true,
-            itemCount: documents.length,
-            itemBuilder: (context, index) {
-              var connectionDoc = documents[index];
-              var otherUserId = connectionDoc['senderId'] == userId ? connectionDoc['receiverId'] : connectionDoc['senderId'];
+                Map<String, dynamic> userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                return ListTile(
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(userData['profilePicUrl'] ?? 'default_image_url_here'),
+                  ),
+                  title: Text(userData['fullName'] ?? 'Unknown'),
+                  subtitle: Text('Pending Request'),
+                  trailing: ElevatedButton(
+                    onPressed: () => _updateConnectionStatus(connectionDoc.id, 'accepted'),
+                    child: Text('Accept'),
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  ),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
 
-              return FutureBuilder<DocumentSnapshot>(
-                future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
-                builder: (context, userSnapshot) {
-                  if (!userSnapshot.hasData) return CircularProgressIndicator();
-                  if (userSnapshot.error != null) return Text('Failed to load data');
-                  if (!userSnapshot.data!.exists) return Text('User not found');
+  Widget _buildActiveConnections() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+        .collection('connections')
+        .where('status', isEqualTo: 'accepted')
+        .where('receiverId', isEqualTo: userId)
+        .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+        List<QueryDocumentSnapshot> documents = snapshot.data!.docs;
 
-                  Map<String, dynamic> userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundImage: userData['profilePicUrl'] != null
-                        ? NetworkImage(userData['profilePicUrl'])
-                        : AssetImage('assets/default_image.png') as ImageProvider,
-                    ),
-                    title: Text(userData['fullName'] ?? 'Unknown'),
-                    subtitle: Text('Active Connection'),
-                    trailing: ElevatedButton(
-                      onPressed: () {
-                        // Interaction logic here, e.g., open chat
-                      },
-                      child: Text('Message'),
-                      style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                    ),
-                  );
-                },
-              );
-            },
-          );
-        },
-      );
-    },
-  );
-}
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+            .collection('connections')
+            .where('status', isEqualTo: 'accepted')
+            .where('senderId', isEqualTo: userId)
+            .snapshots(),
+          builder: (context, senderSnapshot) {
+            if (senderSnapshot.hasData) {
+              documents.addAll(senderSnapshot.data!.docs);
+            }
+            documents = documents.toSet().toList();
 
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: documents.length,
+              itemBuilder: (context, index) {
+                var connectionDoc = documents[index];
+                var otherUserId = connectionDoc['senderId'] == userId ? connectionDoc['receiverId'] : connectionDoc['senderId'];
+
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
+                  builder: (context, userSnapshot) {
+                    if (!userSnapshot.hasData) return CircularProgressIndicator();
+                    if (userSnapshot.error != null) return Text('Failed to load data');
+                    if (!userSnapshot.data!.exists) return Text('User not found');
+
+                    Map<String, dynamic> userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: userData['profilePicUrl'] != null
+                          ? NetworkImage(userData['profilePicUrl'])
+                          : AssetImage('assets/default_image.png') as ImageProvider,
+                      ),
+                      title: Text(userData['fullName'] ?? 'Unknown'),
+                      subtitle: Text('Active Connection'),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          String chatId = _generateChatId(userId, otherUserId);
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => ChatScreen(chatId: chatId),
+                          ));
+                        },
+                        child: Text('Message'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _generateChatId(String userId1, String userId2) {
+    return userId1.compareTo(userId2) < 0 ? '$userId1-$userId2' : '$userId2-$userId1';
+  }
 
   Future<void> _sendConnectionRequest(String receiverId) async {
     if (!_requestedUsers.contains(receiverId)) {
