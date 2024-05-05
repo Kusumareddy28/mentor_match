@@ -19,6 +19,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   DocumentSnapshot? userProfileData;
   Set<String> connectedUserIds = {};
 
+  List<DocumentSnapshot> acceptedConnections = [];
 
   @override
   void initState() {
@@ -27,6 +28,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _backgroundPicture = File('assets/background_picture.jpg');
     _fetchUserProfile();
     _fetchConnections();
+    _fetchAcceptedConnections();
+
   }
 
 Future<void> _fetchUserProfile() async {
@@ -43,6 +46,25 @@ Future<void> _fetchUserProfile() async {
     }
   }
 }
+
+  Future<void> _fetchAcceptedConnections() async {
+    User? currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser != null) {
+      try {
+        var acceptedConnectionsSnapshot = await FirebaseFirestore.instance
+            .collection('connections')
+            .where('status', isEqualTo: 'accepted')
+            .where('senderId', isEqualTo: currentUser.uid)
+            .get();
+
+        setState(() {
+          acceptedConnections = acceptedConnectionsSnapshot.docs;
+        });
+      } catch (e) {
+        print('Error fetching accepted connections: $e');
+      }
+    }
+  }
 
 Future<void> _fetchConnections() async {
     User? currentUser = FirebaseAuth.instance.currentUser;
@@ -313,4 +335,7 @@ Future<void> _fetchConnections() async {
     );
   }
 }
+
+
+
 
