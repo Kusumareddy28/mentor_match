@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import './profile_page.dart';
 import './network_screen.dart';
-import './jobs_screen.dart';
+import './knowledgebase_screen.dart';
 import './message_screen.dart';
 import './picture_screen.dart';
 
@@ -39,7 +39,7 @@ class _HomeScreenState extends State<HomeScreen> {
             items: const [
               BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
               BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Network'),
-              BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Jobs'),
+              BottomNavigationBarItem(icon: Icon(Icons.work), label: 'Knowledge Base Screen'),
               BottomNavigationBarItem(icon: Icon(Icons.message), label: 'Messaging'),
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
             ],
@@ -62,7 +62,7 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildHomePage(),
                 NetworkScreen(),
-                JobsScreen(),
+                KnowledgeBaseScreen(),
                 MessagesScreen(),
                 ProfileScreen(),
               ],
@@ -150,4 +150,3 @@ class DataSearch extends SearchDelegate<String> {
     );
   }
 }
-
