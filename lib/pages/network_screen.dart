@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+<<<<<<< HEAD
 import 'dart:async';
+=======
+import 'chat_screen.dart';  
+>>>>>>> dev-0.1
 
 class NetworkScreen extends StatefulWidget {
   @override
@@ -173,6 +177,103 @@ Future<void> _updateConnectionStatus(String connectionId, String status) async {
         );
       },
     );
+<<<<<<< HEAD
+=======
+  }
+
+  Widget _buildActiveConnections() {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+        .collection('connections')
+        .where('status', isEqualTo: 'accepted')
+        .where('receiverId', isEqualTo: userId)
+        .snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return CircularProgressIndicator();
+        }
+        List<QueryDocumentSnapshot> documents = snapshot.data!.docs;
+
+        return StreamBuilder<QuerySnapshot>(
+          stream: FirebaseFirestore.instance
+            .collection('connections')
+            .where('status', isEqualTo: 'accepted')
+            .where('senderId', isEqualTo: userId)
+            .snapshots(),
+          builder: (context, senderSnapshot) {
+            if (senderSnapshot.hasData) {
+              documents.addAll(senderSnapshot.data!.docs);
+            }
+            documents = documents.toSet().toList();
+
+            return ListView.builder(
+              shrinkWrap: true,
+              itemCount: documents.length,
+              itemBuilder: (context, index) {
+                var connectionDoc = documents[index];
+                var otherUserId = connectionDoc['senderId'] == userId ? connectionDoc['receiverId'] : connectionDoc['senderId'];
+
+                return FutureBuilder<DocumentSnapshot>(
+                  future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
+                  builder: (context, userSnapshot) {
+                    if (!userSnapshot.hasData) return CircularProgressIndicator();
+                    if (userSnapshot.error != null) return Text('Failed to load data');
+                    if (!userSnapshot.data!.exists) return Text('User not found');
+
+                    Map<String, dynamic> userData = userSnapshot.data!.data() as Map<String, dynamic>;
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundImage: userData['profilePicUrl'] != null
+                          ? NetworkImage(userData['profilePicUrl'])
+                          : AssetImage('assets/default_image.png') as ImageProvider,
+                      ),
+                      title: Text(userData['fullName'] ?? 'Unknown'),
+                      subtitle: Text('Active Connection'),
+                      trailing: ElevatedButton(
+                        onPressed: () {
+                          String chatId = _generateChatId(userId, otherUserId);
+                          Navigator.push(context, MaterialPageRoute(
+                            builder: (context) => ChatScreen(chatId: chatId),
+                          ));
+                        },
+                        child: Text('Message'),
+                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                      ),
+                    );
+                  },
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  String _generateChatId(String userId1, String userId2) {
+    return userId1.compareTo(userId2) < 0 ? '$userId1-$userId2' : '$userId2-$userId1';
+  }
+
+  Future<void> _sendConnectionRequest(String receiverId) async {
+    if (!_requestedUsers.contains(receiverId)) {
+      await FirebaseFirestore.instance.collection('connections').add({
+        'senderId': userId,
+        'receiverId': receiverId,
+        'status': 'pending',
+        'timestamp': FieldValue.serverTimestamp(),
+      });
+      setState(() {
+        _requestedUsers.add(receiverId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Connection request sent successfully!")),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Connection already exists or pending.")),
+      );
+    }
+>>>>>>> dev-0.1
   }
 
   Widget _buildActiveConnections() {
