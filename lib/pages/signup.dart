@@ -1,10 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import './login.dart';
-=======
->>>>>>> dev-0.1
 
 class SignUpPage extends StatefulWidget {
   @override
@@ -58,14 +55,11 @@ class _SignUpPageState extends State<SignUpPage> {
               decoration: InputDecoration(labelText: 'Password'),
               obscureText: true,
             ),
-<<<<<<< HEAD
             // Add new TextField for Profession
-=======
 
 
             // Add new TextField for Profession
 
->>>>>>> dev-0.1
             GestureDetector(
               onTap: () => _selectDate(context), // Open date picker on tap
               child: AbsorbPointer(
@@ -108,18 +102,11 @@ class _SignUpPageState extends State<SignUpPage> {
                 },
               ),
             ),
-<<<<<<< HEAD
             Padding(
               padding: EdgeInsets.symmetric(vertical: 8.0),
               child: Text('Gender',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
             ),
-=======
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('Gender', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
-          ),
->>>>>>> dev-0.1
             ListTile(
               title: Text('Female'),
               leading: Radio(
@@ -146,7 +133,6 @@ class _SignUpPageState extends State<SignUpPage> {
             ),
             TextField(
               controller: _profilePicUrlController,
-<<<<<<< HEAD
               decoration: InputDecoration(
                   labelText: 'Profile Picture URL (optional)'),
             ),
@@ -172,17 +158,6 @@ class _SignUpPageState extends State<SignUpPage> {
                 ),
               ),
             ),
-=======
-              decoration:
-                  InputDecoration(labelText: 'Profile Picture URL (optional)'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _signUpWithEmailAndPassword(context),
-              child: Text('Sign Up'),
-            ),
-            SizedBox(height: 20),
->>>>>>> dev-0.1
           ],
         ),
       ),
@@ -273,21 +248,4 @@ class _SignUpPageState extends State<SignUpPage> {
       print(e);
     }
   }
-<<<<<<< HEAD
-=======
-}
-
-class LoginPage extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Login'),
-      ),
-      body: Center(
-        child: Text('Login Page Placeholder'),
-      ),
-    );
-  }
->>>>>>> dev-0.1
 }

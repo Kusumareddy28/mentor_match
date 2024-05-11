@@ -2,13 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import './profile_page.dart';
 import './network_screen.dart';
-<<<<<<< HEAD
 import './knowledgebase_screen.dart';
-import './message_screen.dart';
-=======
+// import './message_screen.dart';
 import './jobs_screen.dart';
 import 'conversation_screen.dart';
->>>>>>> dev-0.1
 import './picture_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -67,13 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 _buildHomePage(),
                 NetworkScreen(),
-<<<<<<< HEAD
                 KnowledgeBaseScreen(),
-                MessagesScreen(),
-=======
-                JobsScreen(),
+                // MessagesScreen(),
                 ConversationsScreen(),
->>>>>>> dev-0.1
                 ProfileScreen(),
               ],
               onPageChanged: (index) {

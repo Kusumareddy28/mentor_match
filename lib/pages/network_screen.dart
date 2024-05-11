@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-<<<<<<< HEAD
 import 'dart:async';
-=======
 import 'chat_screen.dart';  
->>>>>>> dev-0.1
 
 class NetworkScreen extends StatefulWidget {
   @override
@@ -109,33 +106,56 @@ Future<void> _updateConnectionStatus(String connectionId, String status) async {
     }
   }
 
-  Widget _buildUserList() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance.collection('users').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return CircularProgressIndicator();
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: snapshot.data!.docs.length,
-          itemBuilder: (context, index) {
-            var userDoc = snapshot.data!.docs[index];
-            if (userDoc.id == userId || _activeConnections.contains(userDoc.id) || _requestedUsers.contains(userDoc.id) || _pendingUsers.contains(userDoc.id)) {
-              return Container(); // Skip current user and already connected or pending users
-            }
-            return ListTile(
-              title: Text(userDoc['fullName']),
-              subtitle: Text(userDoc['email']),
-              trailing: ElevatedButton(
-                onPressed: () => _sendConnectionRequest(userDoc.id),
-                child: Text('Send Request'),
-              ),
-            );
-          },
-        );
-      },
-    );
+
+
+Widget _buildUserList() {
+  User? currentUser = FirebaseAuth.instance.currentUser;
+  String filterRole = 'mentor'; // Default to showing mentors
+
+  if (currentUser != null) {
+    FirebaseFirestore.instance
+      .collection('users')
+      .doc(currentUser.uid)
+      .get()
+      .then((DocumentSnapshot documentSnapshot) {
+        if (documentSnapshot.exists && documentSnapshot.data() is Map) {
+          Map<String, dynamic> userData = documentSnapshot.data() as Map<String, dynamic>;
+          if (userData['role'] == 'mentor') {
+            filterRole = 'mentee'; // If the user is a mentor, show mentees
+          }
+        }
+      });
   }
+
+  return StreamBuilder<QuerySnapshot>(
+    stream: FirebaseFirestore.instance.collection('users')
+            .where('role', isEqualTo: filterRole)
+            .snapshots(),
+    builder: (context, snapshot) {
+      if (!snapshot.hasData) return CircularProgressIndicator();
+      return ListView.builder(
+        shrinkWrap: true,
+        physics: NeverScrollableScrollPhysics(),
+        itemCount: snapshot.data!.docs.length,
+        itemBuilder: (context, index) {
+          var userDoc = snapshot.data!.docs[index];
+          if (userDoc.id == userId || _activeConnections.contains(userDoc.id) || _requestedUsers.contains(userDoc.id) || _pendingUsers.contains(userDoc.id)) {
+            return Container(); // Skip current user and already connected or pending users
+          }
+          return ListTile(
+            title: Text(userDoc['fullName']),
+            subtitle: Text('${userDoc['profession'] ?? 'No profession'} (${userDoc['role'] ?? 'No role'})'),
+            trailing: ElevatedButton(
+              onPressed: () => _sendConnectionRequest(userDoc.id),
+              child: Text('Send Request'),
+            ),
+          );
+        },
+      );
+    },
+  );
+}
+
 
   Widget _buildPendingRequests() {
     return StreamBuilder<QuerySnapshot>(
@@ -164,7 +184,7 @@ Future<void> _updateConnectionStatus(String connectionId, String status) async {
                     backgroundImage: NetworkImage(userData['profilePicUrl'] ?? 'default_image_url_here'),
                   ),
                   title: Text(userData['fullName'] ?? 'Unknown'),
-                  subtitle: Text('Pending Request'),
+                  subtitle: Text('${userData['profession'] ?? 'No profession'} (${userData['role'] ?? 'No role'})\nPending Request'),
                   trailing: ElevatedButton(
                     onPressed: () => _updateConnectionStatus(connectionDoc.id, 'accepted'),
                     child: Text('Accept'),
@@ -177,8 +197,6 @@ Future<void> _updateConnectionStatus(String connectionId, String status) async {
         );
       },
     );
-<<<<<<< HEAD
-=======
   }
 
   Widget _buildActiveConnections() {
@@ -254,95 +272,6 @@ Future<void> _updateConnectionStatus(String connectionId, String status) async {
     return userId1.compareTo(userId2) < 0 ? '$userId1-$userId2' : '$userId2-$userId1';
   }
 
-  Future<void> _sendConnectionRequest(String receiverId) async {
-    if (!_requestedUsers.contains(receiverId)) {
-      await FirebaseFirestore.instance.collection('connections').add({
-        'senderId': userId,
-        'receiverId': receiverId,
-        'status': 'pending',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-      setState(() {
-        _requestedUsers.add(receiverId);
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Connection request sent successfully!")),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Connection already exists or pending.")),
-      );
-    }
->>>>>>> dev-0.1
-  }
-
-  Widget _buildActiveConnections() {
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-        .collection('connections')
-        .where('status', isEqualTo: 'accepted')
-        .where('receiverId', isEqualTo: userId)
-        .snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) {
-          return CircularProgressIndicator();
-        }
-        List<QueryDocumentSnapshot> documents = snapshot.data!.docs;
-
-        // Fetch connections where the current user is the sender
-        return StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-            .collection('connections')
-            .where('status', isEqualTo: 'accepted')
-            .where('senderId', isEqualTo: userId)
-            .snapshots(),
-          builder: (context, senderSnapshot) {
-            if (senderSnapshot.hasData) {
-              documents.addAll(senderSnapshot.data!.docs);
-            }
-            // Remove duplicates if any and sort or process as needed
-            documents = documents.toSet().toList();
-
-            return ListView.builder(
-              shrinkWrap: true,
-              itemCount: documents.length,
-              itemBuilder: (context, index) {
-                var connectionDoc = documents[index];
-                var otherUserId = connectionDoc['senderId'] == userId ? connectionDoc['receiverId'] : connectionDoc['senderId'];
-
-                return FutureBuilder<DocumentSnapshot>(
-                  future: FirebaseFirestore.instance.collection('users').doc(otherUserId).get(),
-                  builder: (context, userSnapshot) {
-                    if (!userSnapshot.hasData) return CircularProgressIndicator();
-                    if (userSnapshot.error != null) return Text('Failed to load data');
-                    if (!userSnapshot.data!.exists) return Text('User not found');
-
-                    Map<String, dynamic> userData = userSnapshot.data!.data() as Map<String, dynamic>;
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundImage: userData['profilePicUrl'] != null
-                          ? NetworkImage(userData['profilePicUrl'])
-                          : AssetImage('assets/default_image.png') as ImageProvider,
-                      ),
-                      title: Text(userData['fullName'] ?? 'Unknown'),
-                      subtitle: Text('Active Connection'),
-                      trailing: ElevatedButton(
-                        onPressed: () {
-                          // Interaction logic here, e.g., open chat
-                        },
-                        child: Text('Message'),
-                        style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
-                      ),
-                    );
-                  },
-                );
-              },
-            );
-          },
-        );
-      },
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

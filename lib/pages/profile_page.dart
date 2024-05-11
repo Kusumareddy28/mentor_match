@@ -308,34 +308,33 @@ Future<void> _fetchConnections() async {
               style: TextStyle(fontSize: 16, color: Colors.grey),
             ),
             SizedBox(height: 20),
-            Text(
-              'Connections:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            Container(
-              height: 200,
-              child: ListView.builder(
-                itemCount: 10, // Replace with actual number of connections
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.blue,
-                      child: Icon(Icons.person, color: Colors.white),
-                    ),
-                    title: Text('Connection $index'),
-                    subtitle: Text('Software Engineer'),
-                    onTap: () {},
-                  );
-                },
-              ),
-            ),
+            // Text(
+            //   'Connections:',
+            //   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            // ),
+            // Container(
+            //   height: 200,
+            //   child: ListView.builder(
+            //     itemCount: 10, // Replace with actual number of connections
+            //     itemBuilder: (context, index) {
+            //       return ListTile(
+            //         leading: CircleAvatar(
+            //           backgroundColor: Colors.blue,
+            //           child: Icon(Icons.person, color: Colors.white),
+            //         ),
+            //         title: Text('Connection $index'),
+            //         subtitle: Text('Software Engineer'),
+            //         onTap: () {},
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),
     );
   }
 }
-
 
 
 
