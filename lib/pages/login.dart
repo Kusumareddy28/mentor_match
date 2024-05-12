@@ -10,33 +10,47 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  bool _isProcessing = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Login'),
+        backgroundColor: Colors.deepPurple,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
+            TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.email),
+              ),
             ),
-            TextField(
+            SizedBox(height: 16),
+            TextFormField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
               obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
             ),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                _signInWithEmailAndPassword(context);
-              },
-              child: Text('Login'),
+              onPressed: _isProcessing ? null : () => _signInWithEmailAndPassword(context),
+              child: _isProcessing
+                  ? CircularProgressIndicator(color: Colors.white)
+                  : Text('Login'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50), // Sets the button width to full and height to 50
+              ),
             ),
           ],
         ),
@@ -45,6 +59,9 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _signInWithEmailAndPassword(BuildContext context) async {
+    setState(() {
+      _isProcessing = true;
+    });
     try {
       UserCredential userCredential = await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: _emailController.text,
@@ -57,37 +74,33 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (context) => HomeScreen()),
       );
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'user-not-found') {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Error'),
-            content: Text('No user found for that email.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
-      } else if (e.code == 'wrong-password') {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: Text('Error'),
-            content: Text('Wrong password provided for that user.'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text('OK'),
-              ),
-            ],
-          ),
-        );
-      }
-    } catch (e) {
-      print(e);
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Error'),
+          content: Text(_getFirebaseAuthErrorMessage(e)),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('OK'),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
+  String _getFirebaseAuthErrorMessage(FirebaseAuthException e) {
+    if (e.code == 'user-not-found') {
+      return 'No user found for that email.';
+    } else if (e.code == 'wrong-password') {
+      return 'Wrong password provided for that user.';
+    } else {
+      return 'An unexpected error occurred. Please try again.';
     }
   }
 }

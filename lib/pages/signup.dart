@@ -11,124 +11,124 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _fullNameController = TextEditingController();
-  final TextEditingController _profilePicUrlController =
-      TextEditingController();
-  // Add the new controllers and variables
+  final TextEditingController _profilePicUrlController = TextEditingController();
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _professionController = TextEditingController();
   String _gender = 'Female'; // Default gender value
   String _role = 'mentee'; // Default role value
+  bool _isProcessing = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text('Sign Up'),
+        backgroundColor: Colors.deepPurple,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
-        child: ListView(
+        child: Column(
           children: [
-            TextField(
+            TextFormField(
               controller: _fullNameController,
-              decoration: InputDecoration(labelText: 'Full Name'),
+              decoration: InputDecoration(
+                labelText: 'Full Name',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.person),
+              ),
             ),
-            TextField(
+            SizedBox(height: 16),
+            TextFormField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: InputDecoration(
+                labelText: 'Email',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.email),
+              ),
             ),
-            TextField(
+            SizedBox(height: 16),
+            TextFormField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
               obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Password',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.lock),
+              ),
             ),
-
-
-            // Add new TextField for Profession
-
+            SizedBox(height: 16),
             GestureDetector(
-              onTap: () => _selectDate(context), // Open date picker on tap
+              onTap: () => _selectDate(context),
               child: AbsorbPointer(
-                // to prevent manual editing
-                child: TextField(
+                child: TextFormField(
                   controller: _dobController,
                   decoration: InputDecoration(
                     labelText: 'Date of Birth',
-                    hintText: 'Select your date of birth',
-                    suffixIcon: Icon(Icons.calendar_today),
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.calendar_today),
                   ),
                 ),
               ),
             ),
-            TextField(
+            SizedBox(height: 16),
+            TextFormField(
               controller: _professionController,
-              decoration: InputDecoration(labelText: 'Profession'),
-            ),
-            ListTile(
-              title: Text('Mentor'),
-              leading: Radio(
-                value: 'mentor',
-                groupValue: _role,
-                onChanged: (value) {
-                  setState(() {
-                    _role = value.toString();
-                  });
-                },
+              decoration: InputDecoration(
+                labelText: 'Profession',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.work),
               ),
             ),
-            ListTile(
-              title: Text('Mentee'),
-              leading: Radio(
-                value: 'mentee',
-                groupValue: _role,
-                onChanged: (value) {
-                  setState(() {
-                    _role = value.toString();
-                  });
-                },
-              ),
+            SizedBox(height: 16),
+            _buildRoleRadioTile('Mentor', 'mentor'),
+            _buildRoleRadioTile('Mentee', 'mentee'),
+            Padding(
+              padding: EdgeInsets.symmetric(vertical: 8.0),
+              child: Text('Gender', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-          Padding(
-            padding: EdgeInsets.symmetric(vertical: 8.0),
-            child: Text('Gender', style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
-          ),
-            ListTile(
-              title: Text('Female'),
-              leading: Radio(
-                value: 'Female',
-                groupValue: _gender,
-                onChanged: (value) {
-                  setState(() {
-                    _gender = value.toString();
-                  });
-                },
-              ),
-            ),
-            ListTile(
-              title: Text('Male'),
-              leading: Radio(
-                value: 'Male',
-                groupValue: _gender,
-                onChanged: (value) {
-                  setState(() {
-                    _gender = value.toString();
-                  });
-                },
-              ),
-            ),
-            TextField(
-              controller: _profilePicUrlController,
-              decoration:
-                  InputDecoration(labelText: 'Profile Picture URL (optional)'),
-            ),
+            _buildGenderRadioTile('Female', 'Female'),
+            _buildGenderRadioTile('Male', 'Male'),
             SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () => _signUpWithEmailAndPassword(context),
-              child: Text('Sign Up'),
+              onPressed: _isProcessing ? null : () => _signUpWithEmailAndPassword(context),
+              child: _isProcessing ? CircularProgressIndicator(color: Colors.white) : Text('Sign Up'),
+              style: ElevatedButton.styleFrom(
+                minimumSize: Size(double.infinity, 50),
+              ),
             ),
             SizedBox(height: 20),
           ],
         ),
+      ),
+    );
+  }
+
+  ListTile _buildRoleRadioTile(String title, String value) {
+    return ListTile(
+      title: Text(title),
+      leading: Radio(
+        value: value,
+        groupValue: _role,
+        onChanged: (value) {
+          setState(() {
+            _role = value.toString();
+          });
+        },
+      ),
+    );
+  }
+
+  ListTile _buildGenderRadioTile(String title, String value) {
+    return ListTile(
+      title: Text(title),
+      leading: Radio(
+        value: value,
+        groupValue: _gender,
+        onChanged: (value) {
+          setState(() {
+            _gender = value.toString();
+          });
+        },
       ),
     );
   }
@@ -142,17 +142,19 @@ class _SignUpPageState extends State<SignUpPage> {
     );
     if (picked != null) {
       setState(() {
-        // Format the date and show it in the text field
         _dobController.text = "${picked.month}/${picked.day}/${picked.year}";
       });
     }
   }
 
   Future<void> _signUpWithEmailAndPassword(BuildContext context) async {
+    setState(() {
+      _isProcessing = true;
+    });
+
     try {
       // Basic email validation
-      if (!_emailController.text.contains('@') ||
-          !_emailController.text.contains('.')) {
+      if (!_emailController.text.contains('@') || !_emailController.text.contains('.')) {
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -169,42 +171,33 @@ class _SignUpPageState extends State<SignUpPage> {
         return;
       }
 
-      UserCredential userCredential =
-          await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: _emailController.text,
         password: _passwordController.text,
       );
 
       if (userCredential.user != null) {
         await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'fullName': _fullNameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'profilePicUrl': _profilePicUrlController.text.isEmpty ? null : _profilePicUrlController.text.trim(),
-        'dob': _dobController.text,  // Ensure the date format is correct
-        'profession': _professionController.text.trim(),
-        'gender': _gender,
-        'role': _role,
-      });
+          'fullName': _fullNameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'profilePicUrl': _profilePicUrlController.text.isEmpty ? null : _profilePicUrlController.text.trim(),
+          'dob': _dobController.text,
+          'profession': _professionController.text.trim(),
+          'gender': _gender,
+          'role': _role,
+        });
 
-        // Navigate to login page upon successful sign-up
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => LoginPage()),
         );
       }
     } on FirebaseAuthException catch (e) {
-      // Handle Firebase authentication errors
-      String errorMessage = 'An unexpected error occurred. Please try again.';
-      if (e.code == 'weak-password') {
-        errorMessage = 'The password provided is too weak.';
-      } else if (e.code == 'email-already-in-use') {
-        errorMessage = 'An account already exists for that email.';
-      }
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Error'),
-          content: Text(errorMessage),
+          content: Text(_getFirebaseAuthErrorMessage(e)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -213,8 +206,20 @@ class _SignUpPageState extends State<SignUpPage> {
           ],
         ),
       );
-    } catch (e) {
-      print(e);
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
+  String _getFirebaseAuthErrorMessage(FirebaseAuthException e) {
+    if (e.code == 'weak-password') {
+      return 'The password provided is too weak.';
+    } else if (e.code == 'email-already-in-use') {
+      return 'An account already exists for that email.';
+    } else {
+      return 'An unexpected error occurred. Please try again.';
     }
   }
 }

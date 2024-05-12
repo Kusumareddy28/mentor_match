@@ -26,6 +26,8 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Mentor Match'),
+        backgroundColor: Colors.deepPurple,
+        elevation: 4.0,
         leading: IconButton(
           icon: Icon(Icons.search),
           onPressed: () {
@@ -44,21 +46,27 @@ class _HomeScreenState extends State<HomeScreen> {
               BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
             ],
             currentIndex: _selectedIndex,
-            selectedItemColor: Colors.black,
-            unselectedItemColor: Colors.black.withOpacity(0.5),
+            selectedItemColor: Colors.deepPurple,
+            unselectedItemColor: Colors.grey,
             onTap: (index) {
               setState(() {
                 _selectedIndex = index;
                 _pageController.animateToPage(
                   index,
-                  duration: Duration(milliseconds: 300),
-                  curve: Curves.easeInOut,
+                  duration: Duration(milliseconds: 250),
+                  curve: Curves.easeIn,
                 );
               });
             },
           ),
           Expanded(
             child: PageView(
+              controller: _pageController,
+              onPageChanged: (index) {
+                setState(() {
+                  _selectedIndex = index;
+                });
+              },
               children: [
                 _buildHomePage(),
                 NetworkScreen(),
@@ -66,17 +74,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 ConversationsScreen(),
                 ProfileScreen(),
               ],
-              onPageChanged: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
-              },
-              controller: _pageController,
             ),
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
+        backgroundColor: Colors.deepPurple,
         onPressed: () async {
           await Navigator.push(
             context,
@@ -98,9 +101,20 @@ class _HomeScreenState extends State<HomeScreen> {
           itemCount: snapshot.data!.docs.length,
           itemBuilder: (context, index) {
             var doc = snapshot.data!.docs[index];
-            return ListTile(
-              title: Image.network(doc['url']),
-              subtitle: Text(doc['caption']),
+            return Card(
+              clipBehavior: Clip.antiAlias,
+              color: Colors.grey[200], // Set the card background to a light grey
+              margin: EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Image.network(doc['url'], fit: BoxFit.cover),
+                  Container(
+                    padding: EdgeInsets.all(8.0),
+                    child: Text(doc['caption'], style: TextStyle(fontSize: 16)),
+                  ),
+                ],
+              ),
             );
           },
         );
@@ -108,6 +122,7 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
+
 
 class DataSearch extends SearchDelegate<String> {
   @override
@@ -150,4 +165,3 @@ class DataSearch extends SearchDelegate<String> {
     );
   }
 }
-
