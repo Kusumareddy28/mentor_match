@@ -17,8 +17,7 @@ class _PictureScreenState extends State<PictureScreen> {
   bool _isUploading = false;
 
   Future pickImage() async {
-    // Use ImageSource.camera to use the camera
-    final pickedFile = await _picker.pickImage(source: ImageSource.camera);
+    final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
     setState(() {
       if (pickedFile != null) {
@@ -56,29 +55,31 @@ class _PictureScreenState extends State<PictureScreen> {
       appBar: AppBar(
         title: Text('Upload Image'),
       ),
-      body: Center(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            _image == null ? Text('No image selected.') : Image.file(_image!),
-            TextField(
-              controller: _captionController,
-              decoration: InputDecoration(hintText: 'Enter a caption...'),
+            if (_image != null) Image.file(_image!),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: TextField(
+                controller: _captionController,
+                decoration: InputDecoration(
+                  hintText: 'Enter a caption...',
+                  border: OutlineInputBorder(),
+                ),
+              ),
             ),
+            if (_isUploading) CircularProgressIndicator(),
+            SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () {
-                if (!_isUploading) {
-                  pickImage();
-                }
-              },
-              child: Text('Take Picture'),
+              onPressed: _isUploading ? null : pickImage,
+              child: Text('Pick Image'),
             ),
+            SizedBox(height: 10),
             ElevatedButton(
-              onPressed: () {
-                if (!_isUploading && _image != null) {
-                  uploadImage();
-                }
-              },
+              onPressed: (_isUploading || _image == null) ? null : uploadImage,
               child: Text('Upload Image'),
             ),
           ],
