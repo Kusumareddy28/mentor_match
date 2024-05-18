@@ -1,3 +1,12 @@
+// Kusuma Reddyvari - kreddyvari
+// Zeba Samiya - zsamiya
+// signup.dart
+
+
+//This Flutter file defines a SignUpPage widget that facilitates user registration through Firebase Authentication and Firestore. 
+//It includes text fields for personal details, gender and role selection via radio buttons, and buttons for registration and redirection. 
+//The UI supports input validation, user data storage, and navigation control for signed-in or newly registered users.
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -14,11 +23,11 @@ class _SignUpPageState extends State<SignUpPage> {
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _profilePicUrlController =
       TextEditingController();
-  // Add the new controllers and variables
   final TextEditingController _dobController = TextEditingController();
   final TextEditingController _professionController = TextEditingController();
   String _gender = 'Female'; // Default gender value
   String _role = 'mentee'; // Default role value
+  bool _isProcessing = false;
 
   @override
   Widget build(BuildContext context) {
@@ -37,124 +46,176 @@ class _SignUpPageState extends State<SignUpPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Sign Up'),
+        backgroundColor: Colors.teal,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
-        child: ListView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            TextField(
+            SizedBox(height: 20),
+            _buildTextField(
               controller: _fullNameController,
-              decoration: InputDecoration(labelText: 'Full Name'),
+              label: 'Full Name',
+              icon: Icons.person,
             ),
-            TextField(
+            SizedBox(height: 16),
+            _buildTextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              label: 'Email',
+              icon: Icons.email,
+              keyboardType: TextInputType.emailAddress,
             ),
-            TextField(
+            SizedBox(height: 16),
+            _buildTextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              label: 'Password',
+              icon: Icons.lock,
               obscureText: true,
             ),
-            // Add new TextField for Profession
+            SizedBox(height: 16),
             GestureDetector(
-              onTap: () => _selectDate(context), // Open date picker on tap
+              onTap: () => _selectDate(context),
               child: AbsorbPointer(
-                // to prevent manual editing
-                child: TextField(
+                child: _buildTextField(
                   controller: _dobController,
-                  decoration: InputDecoration(
-                    labelText: 'Date of Birth',
-                    hintText: 'Select your date of birth',
-                    suffixIcon: Icon(Icons.calendar_today),
+                  label: 'Date of Birth',
+                  icon: Icons.calendar_today,
+                ),
+              ),
+            ),
+            SizedBox(height: 16),
+            _buildTextField(
+              controller: _professionController,
+              label: 'Profession',
+              icon: Icons.work,
+            ),
+            SizedBox(height: 16),
+            _buildRadioGroup('Role', 'Mentor', 'Mentee', _role,
+                (String? value) {
+              setState(() {
+                _role = value!;
+              });
+            }),
+            SizedBox(height: 16),
+            _buildRadioGroup('Gender', 'Female', 'Male', _gender,
+                (String? value) {
+              setState(() {
+                _gender = value!;
+              });
+            }),
+            SizedBox(height: 16),
+            _buildTextField(
+              controller: _profilePicUrlController,
+              label: 'Profile Picture URL (optional)',
+              icon: Icons.link,
+            ),
+            SizedBox(height: 20),
+            _buildSignUpButton(context),
+            SizedBox(height: 20),
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => LoginPage()),
+                  );
+                },
+                child: Text(
+                  'Already Registered? Login',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.teal,
                   ),
                 ),
               ),
             ),
-            TextField(
-              controller: _professionController,
-              decoration: InputDecoration(labelText: 'Profession'),
-            ),
-            ListTile(
-              title: Text('Mentor'),
-              leading: Radio(
-                value: 'mentor',
-                groupValue: _role,
-                onChanged: (value) {
-                  setState(() {
-                    _role = value.toString();
-                  });
-                },
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscureText = false,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextFormField(
+      controller: controller,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      cursorColor: Colors.teal, // Set the cursor color
+      decoration: InputDecoration(
+        labelText: label,
+        labelStyle: TextStyle(color: Colors.teal), // Set the label color
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(5), // Square-like corners
+        ),
+        prefixIcon: Icon(icon, color: Colors.black),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.teal),
+          borderRadius: BorderRadius.circular(5), // Square-like corners
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRadioGroup(String title, String value1, String value2,
+      String groupValue, void Function(String?) onChanged) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+        Row(
+          children: [
+            Expanded(
+              child: ListTile(
+                title: Text(value1),
+                leading: Radio(
+                  value: value1.toLowerCase(),
+                  groupValue: groupValue,
+                  onChanged: onChanged,
+                  activeColor: Colors.teal,
+                ),
               ),
             ),
-            ListTile(
-              title: Text('Mentee'),
-              leading: Radio(
-                value: 'mentee',
-                groupValue: _role,
-                onChanged: (value) {
-                  setState(() {
-                    _role = value.toString();
-                  });
-                },
-              ),
-            ),
-            Padding(
-              padding: EdgeInsets.symmetric(vertical: 8.0),
-              child: Text('Gender',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.normal)),
-            ),
-            ListTile(
-              title: Text('Female'),
-              leading: Radio(
-                value: 'Female',
-                groupValue: _gender,
-                onChanged: (value) {
-                  setState(() {
-                    _gender = value.toString();
-                  });
-                },
-              ),
-            ),
-            ListTile(
-              title: Text('Male'),
-              leading: Radio(
-                value: 'Male',
-                groupValue: _gender,
-                onChanged: (value) {
-                  setState(() {
-                    _gender = value.toString();
-                  });
-                },
-              ),
-            ),
-            TextField(
-              controller: _profilePicUrlController,
-              decoration: InputDecoration(
-                  labelText: 'Profile Picture URL (optional)'),
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _signUpWithEmailAndPassword(context),
-              child: Text('Sign Up'),
-            ),
-            SizedBox(height: 10),
-            GestureDetector(
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => LoginPage()),
-                );
-              },
-              child: Text(
-                'Already Registered? Login',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: Color.fromARGB(255, 40, 202, 214),
-                  decoration: TextDecoration.underline,
+            Expanded(
+              child: ListTile(
+                title: Text(value2),
+                leading: Radio(
+                  value: value2.toLowerCase(),
+                  groupValue: groupValue,
+                  onChanged: onChanged,
+                  activeColor: Colors.teal,
                 ),
               ),
             ),
           ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSignUpButton(BuildContext context) {
+    return ElevatedButton(
+      onPressed: () => _signUpWithEmailAndPassword(context),
+      child: _isProcessing
+          ? CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+            )
+          : Text('Sign Up', style: TextStyle(fontSize: 18)),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: Colors.teal,
+        foregroundColor: Colors.white,
+        minimumSize: Size(double.infinity, 50),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(5), // Square-like corners
         ),
       ),
     );
@@ -169,13 +230,16 @@ class _SignUpPageState extends State<SignUpPage> {
     );
     if (picked != null) {
       setState(() {
-        // Format the date and show it in the text field
         _dobController.text = "${picked.month}/${picked.day}/${picked.year}";
       });
     }
   }
 
   Future<void> _signUpWithEmailAndPassword(BuildContext context) async {
+    setState(() {
+      _isProcessing = true;
+    });
+
     try {
       // Basic email validation
       if (!_emailController.text.contains('@') ||
@@ -203,35 +267,32 @@ class _SignUpPageState extends State<SignUpPage> {
       );
 
       if (userCredential.user != null) {
-        await FirebaseFirestore.instance.collection('users').doc(userCredential.user!.uid).set({
-        'fullName': _fullNameController.text.trim(),
-        'email': _emailController.text.trim(),
-        'profilePicUrl': _profilePicUrlController.text.isEmpty ? null : _profilePicUrlController.text.trim(),
-        'dob': _dobController.text,  // Ensure the date format is correct
-        'profession': _professionController.text.trim(),
-        'gender': _gender,
-        'role': _role,
-      });
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userCredential.user!.uid)
+            .set({
+          'fullName': _fullNameController.text.trim(),
+          'email': _emailController.text.trim(),
+          'profilePicUrl': _profilePicUrlController.text.isEmpty
+              ? null
+              : _profilePicUrlController.text.trim(),
+          'dob': _dobController.text,
+          'profession': _professionController.text.trim(),
+          'gender': _gender,
+          'role': _role,
+        });
 
-        // Navigate to login page upon successful sign-up
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => LoginPage()),
         );
       }
     } on FirebaseAuthException catch (e) {
-      // Handle Firebase authentication errors
-      String errorMessage = 'An unexpected error occurred. Please try again.';
-      if (e.code == 'weak-password') {
-        errorMessage = 'The password provided is too weak.';
-      } else if (e.code == 'email-already-in-use') {
-        errorMessage = 'An account already exists for that email.';
-      }
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
           title: Text('Error'),
-          content: Text(errorMessage),
+          content: Text(_getFirebaseAuthErrorMessage(e)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
@@ -240,8 +301,20 @@ class _SignUpPageState extends State<SignUpPage> {
           ],
         ),
       );
-    } catch (e) {
-      print(e);
+    } finally {
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
+  String _getFirebaseAuthErrorMessage(FirebaseAuthException e) {
+    if (e.code == 'weak-password') {
+      return 'The password provided is too weak.';
+    } else if (e.code == 'email-already-in-use') {
+      return 'An account already exists for that email.';
+    } else {
+      return 'An unexpected error occurred. Please try again.';
     }
   }
 }

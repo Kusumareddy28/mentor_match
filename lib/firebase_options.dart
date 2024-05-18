@@ -85,5 +85,4 @@ class DefaultFirebaseOptions {
     storageBucket: 'mentormatch-467.appspot.com',
     measurementId: 'G-7Y28EP1PHS',
   );
-
 }
